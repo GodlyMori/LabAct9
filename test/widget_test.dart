@@ -23,21 +23,38 @@ void main() {
     });
   }
 
-  testWidgets('Test 1: Log in using the default admin account -> MainScreen opens', (WidgetTester tester) async {
+  testWidgets('Test 1: Open the application -> Login appears first', (WidgetTester tester) async {
     setLargeScreen(tester);
     await tester.pumpWidget(const StudentApp());
+    expect(find.text('Login'), findsWidgets);
     expect(find.text('Welcome Back!'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Username'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Password'), findsOneWidget);
+  });
 
-    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'admin123');
+  testWidgets('Test 2: Submit empty login fields -> Validation messages appear', (WidgetTester tester) async {
+    setLargeScreen(tester);
+    await tester.pumpWidget(const StudentApp());
     await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Welcome, Student!'), findsOneWidget);
-    expect(DemoAuth.currentUsername, 'admin');
+    expect(find.text('Enter your username.'), findsOneWidget);
+    expect(find.text('Enter your password.'), findsOneWidget);
   });
 
-  testWidgets('Test 2: Open Social Media -> Sample posts appear', (WidgetTester tester) async {
+  testWidgets('Test 3: Enter incorrect credentials -> Login is rejected', (WidgetTester tester) async {
+    setLargeScreen(tester);
+    await tester.pumpWidget(const StudentApp());
+    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'wronguser');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'wrongpass');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Invalid username or password.'), findsOneWidget);
+    expect(find.text('Welcome Back!'), findsOneWidget);
+  });
+
+  testWidgets('Test 4: Enter admin / admin123 -> Dashboard opens', (WidgetTester tester) async {
     setLargeScreen(tester);
     await tester.pumpWidget(const StudentApp());
     await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
@@ -45,17 +62,10 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
     await tester.pumpAndSettle();
 
-    // Switch to Social Media tab
-    await tester.tap(find.byIcon(Icons.share_outlined));
-    await tester.pumpAndSettle();
-
-    expect(find.text('JohnDoe'), findsOneWidget);
-    expect(find.text('Enjoying the sunny weather!'), findsOneWidget);
-    expect(find.text('JaneSmith'), findsOneWidget);
-    expect(find.text('Just finished a great book!'), findsOneWidget);
+    expect(find.text('Dashboard'), findsWidgets);
   });
 
-  testWidgets('Test 3: Submit a post with empty fields -> Validation message appears', (WidgetTester tester) async {
+  testWidgets('Test 5: Read the dashboard greeting -> Displays Welcome, admin!', (WidgetTester tester) async {
     setLargeScreen(tester);
     await tester.pumpWidget(const StudentApp());
     await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
@@ -63,66 +73,86 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.share_outlined));
+    expect(find.text('Welcome, admin!'), findsOneWidget);
+  });
+
+  testWidgets('Test 6: Open Calculator and calculate 10 + 5 -> Displays 15.0', (WidgetTester tester) async {
+    setLargeScreen(tester);
+    await tester.pumpWidget(const StudentApp());
+    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'admin123');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
+    await tester.pumpAndSettle();
+
+    // Navigate to Calculator
+    await tester.tap(find.byIcon(Icons.calculate_outlined));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.widgetWithText(TextField, 'First Number'), '10');
+    await tester.enterText(find.widgetWithText(TextField, 'Second Number'), '5');
+    await tester.tap(find.widgetWithText(ElevatedButton, '+'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('15.0'), findsOneWidget);
+  });
+
+  testWidgets('Test 7: Switch tabs and return to Calculator -> Inputs and result remain', (WidgetTester tester) async {
+    setLargeScreen(tester);
+    await tester.pumpWidget(const StudentApp());
+    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'admin123');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
+    await tester.pumpAndSettle();
+
+    // Navigate to Calculator
+    await tester.tap(find.byIcon(Icons.calculate_outlined));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.widgetWithText(TextField, 'First Number'), '10');
+    await tester.enterText(find.widgetWithText(TextField, 'Second Number'), '5');
+    await tester.tap(find.widgetWithText(ElevatedButton, '+'));
+    await tester.pumpAndSettle();
+    expect(find.text('15.0'), findsOneWidget);
+
+    // Switch to Dashboard
+    await tester.tap(find.byIcon(Icons.dashboard_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('Welcome, admin!'), findsOneWidget);
+
+    // Switch back to Calculator
+    await tester.tap(find.byIcon(Icons.calculate_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.text('10'), findsOneWidget);
+    expect(find.text('5'), findsOneWidget);
+    expect(find.text('15.0'), findsOneWidget);
+  });
+
+  testWidgets('Test 8: Create a social post -> Post displays the logged-in username', (WidgetTester tester) async {
+    setLargeScreen(tester);
+    await tester.pumpWidget(const StudentApp());
+    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'admin123');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
+    await tester.pumpAndSettle();
+
+    // Navigate to Social
+    await tester.tap(find.byIcon(Icons.people_outline));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
 
-    expect(find.text('Create Post'), findsOneWidget);
-
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Submit Post'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Complete both fields before submitting!'), findsOneWidget);
-  });
-
-  testWidgets('Test 4: Submit a post with an invalid URL -> URL validation message appears', (WidgetTester tester) async {
-    setLargeScreen(tester);
-    await tester.pumpWidget(const StudentApp());
-    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'admin123');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byIcon(Icons.share_outlined));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byType(FloatingActionButton));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.widgetWithText(TextField, 'Caption'), 'Test Caption');
-    await tester.enterText(find.widgetWithText(TextField, 'Image URL'), 'not_a_valid_url');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Submit Post'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Enter a valid HTTP or HTTPS image URL.'), findsOneWidget);
-  });
-
-  testWidgets('Test 5: Submit a valid post -> New post appears at the top with the logged-in username', (WidgetTester tester) async {
-    setLargeScreen(tester);
-    await tester.pumpWidget(const StudentApp());
-    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'admin123');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byIcon(Icons.share_outlined));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byType(FloatingActionButton));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.widgetWithText(TextField, 'Caption'), 'My first Flutter social media post!');
+    await tester.enterText(find.widgetWithText(TextField, 'Caption'), 'Admin test post');
     await tester.enterText(find.widgetWithText(TextField, 'Image URL'), 'https://picsum.photos/id/20/600/400');
     await tester.tap(find.widgetWithText(ElevatedButton, 'Submit Post'));
     await tester.pumpAndSettle();
 
-    expect(find.text('My first Flutter social media post!'), findsOneWidget);
+    expect(find.text('Admin test post'), findsOneWidget);
     expect(find.text('admin'), findsOneWidget);
   });
 
-  testWidgets('Test 6: Tap Like twice -> Changes to Liked, then back to Like', (WidgetTester tester) async {
+  testWidgets('Test 9: Like a post and add a comment -> Both interactions update correctly', (WidgetTester tester) async {
     setLargeScreen(tester);
     await tester.pumpWidget(const StudentApp());
     await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
@@ -130,47 +160,26 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.share_outlined));
+    // Navigate to Social
+    await tester.tap(find.byIcon(Icons.people_outline));
     await tester.pumpAndSettle();
 
-    // Tap Like
+    // Like first post
     await tester.tap(find.text('Like').first);
     await tester.pumpAndSettle();
-
     expect(find.text('Liked'), findsOneWidget);
-
-    // Tap Liked to unlike
-    await tester.tap(find.text('Liked').first);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Liked'), findsNothing);
-    expect(find.text('Like'), findsWidgets);
-  });
-
-  testWidgets('Test 7: Add a nonempty comment -> Comment appears and count increases', (WidgetTester tester) async {
-    setLargeScreen(tester);
-    await tester.pumpWidget(const StudentApp());
-    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'admin123');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byIcon(Icons.share_outlined));
-    await tester.pumpAndSettle();
-
-    expect(find.text('0 Comments'), findsWidgets);
 
     // Add comment
     final commentField = find.widgetWithText(TextField, 'Add a comment...').first;
-    await tester.enterText(commentField, 'Awesome photo!');
+    await tester.enterText(commentField, 'Great view!');
     await tester.tap(find.byTooltip('Send comment').first);
     await tester.pumpAndSettle();
 
     expect(find.text('1 Comments'), findsOneWidget);
-    expect(find.text('Awesome photo!'), findsOneWidget);
+    expect(find.text('Great view!'), findsOneWidget);
   });
 
-  testWidgets('Test 8: Submit a blank comment -> No comment is added', (WidgetTester tester) async {
+  testWidgets('Test 10: Switch tabs and return to Social -> Posts, likes, and comments remain', (WidgetTester tester) async {
     setLargeScreen(tester);
     await tester.pumpWidget(const StudentApp());
     await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
@@ -178,100 +187,78 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.share_outlined));
-    await tester.pumpAndSettle();
-
-    expect(find.text('0 Comments'), findsWidgets);
-
-    // Tap send without typing
-    await tester.tap(find.byTooltip('Send comment').first);
-    await tester.pumpAndSettle();
-
-    expect(find.text('0 Comments'), findsWidgets);
-  });
-
-  testWidgets('Test 9: Like a sample post, then create another post -> The original post keeps its liked state', (WidgetTester tester) async {
-    setLargeScreen(tester);
-    await tester.pumpWidget(const StudentApp());
-    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'admin123');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byIcon(Icons.share_outlined));
-    await tester.pumpAndSettle();
-
-    // Like JohnDoe's post
-    await tester.tap(find.text('Like').first);
-    await tester.pumpAndSettle();
-    expect(find.text('Liked'), findsOneWidget);
-
-    // Create another post
-    await tester.tap(find.byType(FloatingActionButton));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextField, 'Caption'), 'New post above');
-    await tester.enterText(find.widgetWithText(TextField, 'Image URL'), 'https://picsum.photos/id/1/200/200');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Submit Post'));
-    await tester.pumpAndSettle();
-
-    // JohnDoe post still has 'Liked'
-    expect(find.text('Liked'), findsOneWidget);
-  });
-
-  testWidgets('Test 10: Switch to Home and return -> Posts, likes, and comments remain', (WidgetTester tester) async {
-    setLargeScreen(tester);
-    await tester.pumpWidget(const StudentApp());
-    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'admin123');
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byIcon(Icons.share_outlined));
+    // Navigate to Social
+    await tester.tap(find.byIcon(Icons.people_outline));
     await tester.pumpAndSettle();
 
     // Like first post
     await tester.tap(find.text('Like').first);
     await tester.pumpAndSettle();
 
-    // Comment on first post
-    await tester.enterText(find.widgetWithText(TextField, 'Add a comment...').first, 'Persistent comment');
+    // Add comment
+    await tester.enterText(find.widgetWithText(TextField, 'Add a comment...').first, 'Persistent post comment');
     await tester.tap(find.byTooltip('Send comment').first);
     await tester.pumpAndSettle();
 
-    // Switch to Home
-    await tester.tap(find.byIcon(Icons.home_outlined));
+    // Switch to Dashboard
+    await tester.tap(find.byIcon(Icons.dashboard_outlined));
     await tester.pumpAndSettle();
-    expect(find.text('Welcome, Student!'), findsOneWidget);
+    expect(find.text('Welcome, admin!'), findsOneWidget);
 
-    // Switch back to Social Media
-    await tester.tap(find.byIcon(Icons.share_outlined));
+    // Switch back to Social
+    await tester.tap(find.byIcon(Icons.people_outline));
     await tester.pumpAndSettle();
 
     expect(find.text('Liked'), findsOneWidget);
-    expect(find.text('Persistent comment'), findsOneWidget);
+    expect(find.text('Persistent post comment'), findsOneWidget);
     expect(find.text('1 Comments'), findsOneWidget);
   });
 
-  testWidgets('Test 11: Log out, register, and log in with a new account -> New posts use the registered username', (WidgetTester tester) async {
+  testWidgets('Test 11: Open Profile -> Student information and username appear', (WidgetTester tester) async {
     setLargeScreen(tester);
     await tester.pumpWidget(const StudentApp());
-
-    // Login as admin
     await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
     await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'admin123');
     await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
     await tester.pumpAndSettle();
 
-    // Go to Profile and Log out
+    // Navigate to Profile
     await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pumpAndSettle();
 
+    expect(find.text('Student Profile'), findsOneWidget);
+    expect(find.text('Alvin Miano Legarbes'), findsOneWidget);
+    expect(find.text('Logged in as: admin'), findsOneWidget);
+    expect(find.text('554713'), findsOneWidget);
+    expect(find.text('BSIT — CCE106(3447)'), findsOneWidget);
+    expect(find.text('a.legarbes.554713@umindanao.edu.ph'), findsOneWidget);
+  });
+
+  testWidgets('Test 12: Tap Logout -> Login appears; Back does not reopen MainScreen', (WidgetTester tester) async {
+    setLargeScreen(tester);
+    await tester.pumpWidget(const StudentApp());
+    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'admin');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'admin123');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
+    await tester.pumpAndSettle();
+
+    // Navigate to Profile
+    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.pumpAndSettle();
+
+    // Tap Logout
     await tester.tap(find.text('Logout'));
     await tester.pumpAndSettle();
 
     expect(find.text('Welcome Back!'), findsOneWidget);
+    expect(DemoAuth.currentUsername, isNull);
+  });
 
-    // Register a new user
+  testWidgets('Test 13: Register a valid account and log in -> Dashboard displays the registered username', (WidgetTester tester) async {
+    setLargeScreen(tester);
+    await tester.pumpWidget(const StudentApp());
+
+    // Register
     await tester.tap(find.text("Don't have an account? Register"));
     await tester.pumpAndSettle();
 
@@ -281,34 +268,58 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Register'));
     await tester.pumpAndSettle();
 
-    // Wait for the SnackBar from registration to clear
+    // Dismiss SnackBar
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
 
-    // Login with new user
+    // Login with registered user
     await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'alvin');
     await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'password123');
     await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Welcome, alvin!'), findsOneWidget);
     expect(DemoAuth.currentUsername, 'alvin');
+  });
 
-    // Switch to Social Media tab
-    await tester.tap(find.byIcon(Icons.share_outlined));
+  testWidgets('Test 14: Create a post using the registered account -> Post displays the registered username', (WidgetTester tester) async {
+    setLargeScreen(tester);
+    await tester.pumpWidget(const StudentApp());
+
+    // Register
+    await tester.tap(find.text("Don't have an account? Register"));
     await tester.pumpAndSettle();
 
-    // Create post
+    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'alvin');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'password123');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Confirm Password'), 'password123');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Register'));
+    await tester.pumpAndSettle();
+
+    // Dismiss SnackBar
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+
+    // Login with registered user
+    await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'alvin');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'password123');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
+    await tester.pumpAndSettle();
+
+    // Navigate to Social
+    await tester.tap(find.byIcon(Icons.people_outline));
+    await tester.pumpAndSettle();
+
+    // Create a post
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
 
-    expect(find.text('Create Post'), findsOneWidget);
-
-    await tester.enterText(find.widgetWithText(TextField, 'Caption'), 'Post from alvin');
+    await tester.enterText(find.widgetWithText(TextField, 'Caption'), 'Post from registered alvin');
     await tester.enterText(find.widgetWithText(TextField, 'Image URL'), 'https://picsum.photos/id/10/300/300');
     await tester.tap(find.widgetWithText(ElevatedButton, 'Submit Post'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Post from alvin'), findsOneWidget);
+    expect(find.text('Post from registered alvin'), findsOneWidget);
     expect(find.text('alvin'), findsOneWidget);
   });
 }

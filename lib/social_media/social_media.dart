@@ -35,6 +35,9 @@ class _SocialMediaPageState extends State<SocialMediaPage> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (BuildContext context) {
         return CreatePostSheet(
           username: widget.username,
@@ -58,11 +61,21 @@ class _SocialMediaPageState extends State<SocialMediaPage> {
         title: const Text('Social Media'),
       ),
       body: posts.isEmpty
-          ? const Center(
-              child: Text('No posts yet. Create one!'),
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.feed_outlined, size: 64, color: Colors.indigo.shade200),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'No posts yet. Create one!',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               itemCount: posts.length,
               findChildIndexCallback: (Key key) {
                 if (key is ObjectKey) {
@@ -82,9 +95,11 @@ class _SocialMediaPageState extends State<SocialMediaPage> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: openCreatePostSheet,
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         tooltip: 'Create Post',
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add),
       ),
     );
